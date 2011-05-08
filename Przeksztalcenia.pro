@@ -46,7 +46,8 @@ SOURCES += main.cpp\
     bandpassfilter.cpp \
     bandstopfilter.cpp \
     phaseshiftfilter.cpp \
-    multispinvaluedialog.cpp
+    multispinvaluedialog.cpp \
+    simpledct.cpp
 
 HEADERS  += mainwindow.h \
     photowindow.h \
@@ -80,7 +81,8 @@ HEADERS  += mainwindow.h \
     bandpassfilter.h \
     bandstopfilter.h \
     phaseshiftfilter.h \
-    multispinvaluedialog.h
+    multispinvaluedialog.h \
+    simpledct.h
 
 FORMS    += mainwindow.ui \
     photowindow.ui \

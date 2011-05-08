@@ -11,6 +11,7 @@
 #include "rosenfeldfilter.h"
 #include "qualitychecker.h"
 #include "fft.h"
+#include "simpledct.h"
 
 #include <QFileDialog>
 #include <QImage>
@@ -78,6 +79,7 @@ void PhotoWindow::constructorInternals(const QString &title)
 	mFiltersMenu->addSeparator();
 
 	appendFilter(new FFT(this));
+	appendFilter(new SimpleDCT(this));
 
 	connect(mFiltersMenu, SIGNAL(triggered(QAction*)), this, SLOT(applyFilter(QAction*)));
 }
