@@ -13,6 +13,7 @@ public:
 	virtual QString name() const;
 	void perform(ComplexArray *ca, bool inverse = false);
 	qreal alpha(int u) const;
+	virtual const QImages complexToImages(const ComplexArray *ca, QImage::Format format) const;
 
 signals:
 

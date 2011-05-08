@@ -13,6 +13,7 @@ public:
 	virtual QString name() const;
 	void perform(ComplexArray *ca, bool inverse = false);
 	virtual DisplayWindow *invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *parent);
+	virtual const QImages complexToImages(const ComplexArray *ca, QImage::Format format) const;
 
 signals:
 
@@ -21,10 +22,13 @@ public slots:
 	virtual bool setup(const FilterData &data);
 
 private:
+
 	void rearrange(QVector<Complex> &elements);
 	void transform(QVector<Complex> &elements, bool inverse);
+
 	ComplexArray *mCA;
 	QSize mSize;
+
 };
 
 #endif // FFT_H

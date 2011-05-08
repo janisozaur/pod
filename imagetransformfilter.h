@@ -8,9 +8,14 @@ class ImageTransformFilter : public ImageFilter
 {
 	Q_OBJECT
 public:
+	struct QImages {
+		QImage phase, magnitude;
+	};
+
 	explicit ImageTransformFilter(QObject *parent);
 	virtual QString name() const = 0;
 	virtual DisplayWindow *invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *parent);
+	virtual const QImages complexToImages(const ComplexArray *ca, QImage::Format format) const = 0;
 
 signals:
 
@@ -20,6 +25,7 @@ public slots:
 
 protected:
 	qreal extractColor(const QRgb &color, int which) const;
+	void rearrangeQuadrants(QImage &phase, QImage &magnitude) const;
 };
 
 #endif // IMAGETRANSFORMFILTER_H

@@ -1,5 +1,6 @@
 #include "simpledct.h"
 #include "transformwindow.h"
+#include "colorparser.h"
 
 #include <QDebug>
 
@@ -132,4 +133,101 @@ void SimpleDCT::transform(QVector<Complex> &elements, bool inverse)
 		result << c;
 	}
 	elements = result;
+}
+
+const ImageTransformFilter::QImages SimpleDCT::complexToImages(const ComplexArray *ca, QImage::Format format) const
+{
+	QSize size(ca->shape()[1], ca->shape()[2]);
+	QImage phaseImage = QImage(size, format);
+	QImage magnitudeImage = QImage(size, format);
+	if (format == QImage::Format_Indexed8) {
+		QVector<QRgb> colors;
+		colors.reserve(256);
+		for (int i = 0; i < 256; i++) {
+			colors << qRgb(i, i, i);
+		}
+		phaseImage.setColorTable(colors);
+		magnitudeImage.setColorTable(colors);
+		phaseImage.fill(0);
+		magnitudeImage.fill(0);
+	} else {
+		phaseImage.fill(Qt::black);
+		magnitudeImage.fill(Qt::black);
+	}
+	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+		qreal minp = 0;
+		qreal maxp = 0;
+		qreal minm = 0;
+		qreal maxm = 0;
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				qreal phase = (*ca)[i][j][k].phase();
+				qreal magnitude = (*ca)[i][j][k].abs();
+				if (phase > maxp) {
+					maxp = phase;
+				} else if (phase < minp) {
+					minp = phase;
+				}
+				if (magnitude > maxm) {
+					maxm = magnitude;
+				} else if (magnitude < minm) {
+					minm = magnitude;
+				}
+			}
+		}
+
+		ColorParser cp(format);
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				qreal p = ((*ca)[i][j][k].phase() - minp) / (maxp - minp) * 255.0;
+				{
+					QVector3D oldPixel = cp.pixel(k, j, phaseImage);
+					QVector3D newPixel;
+					switch (i) {
+						case 0:
+							newPixel.setX(p);
+							break;
+						case 1:
+							newPixel.setY(p);
+							break;
+						case 2:
+							newPixel.setZ(p);
+							break;
+						default:
+							break;
+					}
+					cp.setPixel(k, j, phaseImage, cp.merge(oldPixel, newPixel));
+				}
+
+				// logarithmic scale
+				// implementaion: http://homepages.inf.ed.ac.uk/rbf/HIPR2/pixlog.htm
+				// idea: http://homepages.inf.ed.ac.uk/rbf/HIPR2/fourier.htm#guidelines
+				p = (*ca)[i][j][k].abs();
+				{
+					qreal c = 255.0 / log(1.0 + abs(maxm - minm));
+					p = c * log(1.0 + p);
+					QVector3D oldPixel = cp.pixel(k, j, magnitudeImage);
+					QVector3D newPixel;
+					switch (i) {
+						case 0:
+							newPixel.setX(p);
+							break;
+						case 1:
+							newPixel.setY(p);
+							break;
+						case 2:
+							newPixel.setZ(p);
+							break;
+						default:
+							break;
+					}
+					cp.setPixel(k, j, magnitudeImage, cp.merge(oldPixel, newPixel));
+				}
+			}
+		}
+	}
+	QImages images;
+	images.magnitude = magnitudeImage;
+	images.phase = phaseImage;
+	return images;
 }
