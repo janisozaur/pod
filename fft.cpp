@@ -1,6 +1,7 @@
 #include "fft.h"
 #include "transformwindow.h"
 #include "colorparser.h"
+#include "photowindow.h"
 
 #include "QDebug"
 
@@ -77,8 +78,19 @@ DisplayWindow *FFT::apply(QString windowBaseName)
 	int h = mSize.height();
 	ComplexArray *ca = new ComplexArray(boost::extents[layers][w][h]);
 	*ca = *mCA;
+
 	// parent's parent should be MainWindow
-	return new TransformWindow(ca, mFormat, windowBaseName + ", " + name(), q_check_ptr(qobject_cast<QWidget *>(parent()->parent())));
+	QWidget *mainWindow = q_check_ptr(qobject_cast<QWidget *>(parent()->parent()));
+
+	// this object is used for transform inversion and can be shared among
+	// multiple instances of TransformWindow* and hance cannot use one of them
+	// as a parent. ideally, this should be constructed for each and every
+	// instance of TW but since we do not store any actual data, the "leak"
+	// (this is a QObject, so it adheres to QObject's deletion rules) is quite
+	// small.
+	// * - see TransformFilter class
+	FFT *fft = new FFT(qobject_cast<QObject *>(mainWindow));
+	return new TransformWindow(ca, fft, mFormat, windowBaseName + ", " + name(), mainWindow);
 }
 
 void FFT::rearrange(QVector<Complex> &elements)
@@ -154,4 +166,63 @@ void FFT::transform(QVector<Complex> &elements, bool inverse)
 			factor = multiplier * factor + factor;
 		}
 	}
+}
+
+DisplayWindow *FFT::invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *p)
+{
+	int w = ca->shape()[1];
+	int h = ca->shape()[2];
+	perform(ca, true);
+	ColorParser cp(format);
+	QImage result(w, h, format);
+	result.fill(Qt::black);
+	if (format == QImage::Format_Indexed8) {
+		QVector<QRgb> colors;
+		colors.reserve(256);
+		for (int i = 0; i < 256; i++) {
+			colors << qRgb(i, i, i);
+		}
+		result.setColorTable(colors);
+	}
+	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+		qreal min = 0;
+		qreal max = 0;
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				qreal real = (*ca)[i][j][k].real();
+				if (real > max) {
+					max = real;
+				} else if (real < min) {
+					min = real;
+				}
+			}
+		}
+
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				qreal p = ((*ca)[i][j][k].real() - min) / (max - min) * 255.0;
+				{
+					QVector3D oldPixel = cp.pixel(k, j, result);
+					QVector3D newPixel;
+					switch (i) {
+						case 0:
+							newPixel.setX(p);
+							break;
+						case 1:
+							newPixel.setY(p);
+							break;
+						case 2:
+							newPixel.setZ(p);
+							break;
+						default:
+							break;
+					}
+					cp.setPixel(k, j, result, cp.merge(oldPixel, newPixel));
+				}
+			}
+		}
+	}
+	result = result.rgbSwapped();
+	PhotoWindow *pw = new PhotoWindow(result, title + ", IFFT", p);
+	return pw;
 }

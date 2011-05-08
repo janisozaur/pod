@@ -2,6 +2,7 @@
 #define IMAGETRANSFORMFILTER_H
 
 #include "imagefilter.h"
+#include "complexarray.h"
 
 class ImageTransformFilter : public ImageFilter
 {
@@ -9,6 +10,7 @@ class ImageTransformFilter : public ImageFilter
 public:
 	explicit ImageTransformFilter(QObject *parent);
 	virtual QString name() const = 0;
+	virtual DisplayWindow *invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *parent);
 
 signals:
 

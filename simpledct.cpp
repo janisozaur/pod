@@ -68,8 +68,13 @@ DisplayWindow *SimpleDCT::apply(QString windowBaseName)
 	int h = mSize.height();
 	ComplexArray *ca = new ComplexArray(boost::extents[layers][w][h]);
 	*ca = *mCA;
+
 	// parent's parent should be MainWindow
-	return new TransformWindow(ca, mFormat, windowBaseName + ", " + name(), q_check_ptr(qobject_cast<QWidget *>(parent()->parent())));
+	QWidget *mainWindow = q_check_ptr(qobject_cast<QWidget *>(parent()->parent()));
+
+	// see the comment in FFT::apply
+	SimpleDCT *sdct = new SimpleDCT(qobject_cast<QObject *>(mainWindow));
+	return new TransformWindow(ca, sdct, mFormat, windowBaseName + ", " + name(), q_check_ptr(qobject_cast<QWidget *>(parent()->parent())));
 }
 
 void SimpleDCT::perform(ComplexArray *ca, bool inverse)

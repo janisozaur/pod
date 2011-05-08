@@ -12,15 +12,17 @@ namespace Ui {
 }
 
 class FilterInterface;
+class ImageTransformFilter;
 
 class TransformWindow : public DisplayWindow
 {
 	Q_OBJECT
 
 public:
-	explicit TransformWindow(QImage magnitude, QImage phase, ComplexArray *ca, QString title, QWidget *parent = 0);
-	explicit TransformWindow(ComplexArray *ca, QImage::Format format, QString title, QWidget *parent);
+	explicit TransformWindow(QImage magnitude, QImage phase, ComplexArray *ca, ImageTransformFilter *inverter, QString title, QWidget *parent = 0);
+	explicit TransformWindow(ComplexArray *ca, ImageTransformFilter *inverter, QImage::Format format, QString title, QWidget *parent);
 	~TransformWindow();
+	ImageTransformFilter *inverter() const;
 
 private:
 	void constructorInternals(QString title);
@@ -33,6 +35,7 @@ private:
 	ComplexArray *mCA;
 	QHash<QUuid, FilterInterface *> mFiltersHash;
 	QMenu *mFiltersMenu;
+	ImageTransformFilter *mInverter;
 
 private slots:
 	void applyFilter(QAction *action);

@@ -12,6 +12,7 @@ public:
 	~FFT();
 	virtual QString name() const;
 	void perform(ComplexArray *ca, bool inverse = false);
+	virtual DisplayWindow *invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *parent);
 
 signals:
 
