@@ -12,6 +12,8 @@
 #include "phaseshiftfilter.h"
 
 #include <QMessageBox>
+#include <QFileInfo>
+#include <QFileDialog>
 
 #include <QDebug>
 
@@ -119,4 +121,15 @@ void TransformWindow::invert()
 ImageTransformFilter *TransformWindow::inverter() const
 {
 	return mInverter;
+}
+
+void TransformWindow::on_actionSave_triggered()
+{
+	QString url = QFileDialog::getSaveFileName(this, tr("Save Image"), "", tr("png image (*.png)"));
+	if (url.isEmpty()) {
+		return;
+	}
+	QFileInfo fi(url);
+	mPhaseImage.save(fi.path() + "/" + fi.baseName() + "_phase." + fi.completeSuffix());
+	mMagnitudeImage.save(fi.path() + "/" + fi.baseName() + "_magnitude." + fi.completeSuffix());
 }

@@ -40,6 +40,7 @@ private:
 private slots:
 	void applyFilter(QAction *action);
 	void invert();
+	void on_actionSave_triggered();
 };
 
 #endif // TRANSFORMWINDOW_H
