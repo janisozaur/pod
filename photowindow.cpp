@@ -168,6 +168,9 @@ void PhotoWindow::on_actionGeneruj_histogramy_triggered()
 void PhotoWindow::on_actionSave_triggered()
 {
 	QString url = QFileDialog::getSaveFileName(this, tr("Save Image"), "", tr("png image (*.png)"));
+	if (url.isEmpty()) {
+		return;
+	}
 	mImage.save(url);
 }
 
