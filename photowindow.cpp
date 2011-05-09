@@ -12,6 +12,7 @@
 #include "qualitychecker.h"
 #include "fft.h"
 #include "simpledct.h"
+#include "fourierdct.h"
 
 #include <QFileDialog>
 #include <QImage>
@@ -80,6 +81,7 @@ void PhotoWindow::constructorInternals(const QString &title)
 
 	appendFilter(new FFT(this));
 	appendFilter(new SimpleDCT(this));
+	appendFilter(new FourierDCT(this));
 
 	connect(mFiltersMenu, SIGNAL(triggered(QAction*)), this, SLOT(applyFilter(QAction*)));
 }
