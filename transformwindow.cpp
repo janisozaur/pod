@@ -10,6 +10,10 @@
 #include "bandpassfilter.h"
 #include "bandstopfilter.h"
 #include "phaseshiftfilter.h"
+#include "dcthighpassfilter.h"
+#include "dctlowpassfilter.h"
+#include "dctbandpassfilter.h"
+#include "dctbandstopfilter.h"
 
 #include <QMessageBox>
 #include <QFileInfo>
@@ -66,6 +70,13 @@ void TransformWindow::constructorInternals(QString title)
 	appendFilter(new BandPassFilter(this));
 	appendFilter(new BandStopFilter(this));
 	appendFilter(new PhaseShiftFilter(this));
+
+	mFiltersMenu->addSeparator();
+
+	appendFilter(new DctHighPassFilter(this));
+	appendFilter(new DctLowPassFilter(this));
+	appendFilter(new DctBandPassFilter(this));
+	appendFilter(new DctBandStopFilter(this));
 
 	QAction *fftAction = new QAction("Invert", this);
 	connect(fftAction, SIGNAL(triggered()), this, SLOT(invert()));

@@ -48,7 +48,11 @@ SOURCES += main.cpp\
     phaseshiftfilter.cpp \
     multispinvaluedialog.cpp \
     simpledct.cpp \
-    fourierdct.cpp
+    fourierdct.cpp \
+    dctbandpassfilter.cpp \
+    dctbandstopfilter.cpp \
+    dcthighpassfilter.cpp \
+    dctlowpassfilter.cpp
 
 HEADERS  += mainwindow.h \
     photowindow.h \
@@ -84,7 +88,11 @@ HEADERS  += mainwindow.h \
     phaseshiftfilter.h \
     multispinvaluedialog.h \
     simpledct.h \
-    fourierdct.h
+    fourierdct.h \
+    dctbandpassfilter.h \
+    dctbandstopfilter.h \
+    dcthighpassfilter.h \
+    dctlowpassfilter.h
 
 FORMS    += mainwindow.ui \
     photowindow.ui \
