@@ -8,11 +8,47 @@ SimpleDCT::SimpleDCT(QObject *parent) :
 	ImageTransformFilter(parent),
 	mCA(NULL)
 {
+	test();
 }
 
 SimpleDCT::~SimpleDCT()
 {
 	delete mCA;
+}
+
+void SimpleDCT::test()
+{
+	QVector<Complex> c;
+	// http://www.hydrogenaudio.org/forums/index.php?showtopic=39574
+	qDebug() << "SimpleDCT test. expected values: 5.0000   -2.2304         0   -0.1585";
+	c << Complex(1, 0);
+	c << Complex(2, 0);
+	c << Complex(3, 0);
+	c << Complex(4, 0);
+	qDebug() << "input: " << c;
+
+	ComplexArray *ca = new ComplexArray(boost::extents[1][1][c.count()]);
+	for (int i = 0; i < c.count(); i++) {
+		(*ca)[0][0][i] = c.at(i);
+	}
+	perform(ca);
+
+	transform(c, false);
+	qDebug() << "transformed by hand: " << c;
+
+	mAlphaDC = 1.0 / sqrt(c.count());
+	mAlphaAC = sqrt(2.0 / c.count());
+	for (int i = 0; i < c.count(); i++) {
+		c[i] *= Complex(alpha(i), 0);
+	}
+	qDebug() << "scaled by hand: " << c;
+
+	c.resize(0);
+	for (unsigned int i = 0; i < ca->shape()[3]; i++) {
+		c << (*ca)[0][0][i];
+	}
+	qDebug() << "transformed autmatically: " << c;
+	delete ca;
 }
 
 bool SimpleDCT::setup(const FilterData &data)

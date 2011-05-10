@@ -23,6 +23,7 @@ public slots:
 
 private:
 	void transform(QVector<Complex> &elements, bool inverse);
+	void test();
 	ComplexArray *mCA;
 	QSize mSize;
 	qreal mAlphaAC, mAlphaDC;
