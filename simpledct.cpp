@@ -82,9 +82,6 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 {
 	Q_ASSERT(ca->num_dimensions() == 3);
 	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
-		// alpha values get the N = (size of the innermost loop)
-		mAlphaDC = 1.0 / sqrt(ca->shape()[1]);
-		mAlphaAC = sqrt(2.0 / ca->shape()[1]);
 		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
 			QVector<Complex> elements;
 			elements.reserve(ca->shape()[1]);
@@ -97,8 +94,6 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 			}
 		}
 
-		mAlphaDC = 1.0 / sqrt(ca->shape()[2]);
-		mAlphaAC = sqrt(2.0 / ca->shape()[2]);
 		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
 			QVector<Complex> elements;
 			elements.reserve(ca->shape()[2]);
@@ -108,6 +103,23 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 			transform(elements, inverse);
 			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
 				(*ca)[i][j][k] = elements.at(k);
+			}
+		}
+
+		// alpha values get the N = (size of the innermost loop)
+		mAlphaDC = 1.0 / sqrt(ca->shape()[1]);
+		mAlphaAC = sqrt(2.0 / ca->shape()[1]);
+		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
+				(*ca)[i][k][j] *= Complex(alpha(k), 0);
+			}
+		}
+
+		mAlphaDC = 1.0 / sqrt(ca->shape()[2]);
+		mAlphaAC = sqrt(2.0 / ca->shape()[2]);
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				(*ca)[i][j][k] *= Complex(alpha(k), 0);
 			}
 		}
 	}
@@ -129,7 +141,6 @@ void SimpleDCT::transform(QVector<Complex> &elements, bool inverse)
 		for (int j = 0; j < N; j++) {
 			c.setReal(elements.at(j).real() * std::cos(M_PI_2 * (2 * j + 1) * i / N) + c.real());
 		}
-		c.setReal(c.real() * alpha(i));
 		result << c;
 	}
 	elements = result;
