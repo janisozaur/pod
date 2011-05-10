@@ -118,91 +118,60 @@ qreal FourierDCT::alpha(int u) const
 	return (u == 0) ? mAlphaDC : mAlphaAC;
 }
 
+void FourierDCT::oneDFft(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
+{
+	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
+		QVector<Complex> elements;
+		elements.reserve(ca->shape()[idx1]);
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k += 2) {
+			elements << (*ca)[idx][k][j];
+		}
+		for (int k = ca->shape()[idx1] - 1; k >= 0; k -= 2) {
+			elements << (*ca)[idx][k][j];
+		}
+
+		rearrange(elements);
+		transform(elements, inverse);
+
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			(*ca)[idx][k][j] = elements.at(k);
+		}
+	}
+}
+
+void FourierDCT::prepareFft(ComplexArray *ca, int idx, int idx1, int idx2)
+{
+	qreal c = -M_PI_2 / qreal(ca->shape()[idx1]);
+	mAlphaDC = 1.0 / sqrt(ca->shape()[idx1]);
+	mAlphaAC = sqrt(2.0 / ca->shape()[idx1]);
+	mW.resize(0);
+	for (int j = 0; j < ca->shape()[1]; j++) {
+		mW << Complex::fromPowerPhase(1, c * j) * Complex(alpha(j), 0);
+	}
+	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			(*ca)[idx][k][j] *= mW.at(k);
+		}
+	}
+}
+
 void FourierDCT::perform(ComplexArray *ca, bool inverse)
 {
 	Q_ASSERT(ca->num_dimensions() == 3);
 	mW.reserve(qMax(ca->shape()[1], ca->shape()[2]));
 	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
-		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
-			QVector<Complex> elements;
-			elements.reserve(ca->shape()[1]);
-			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
-				elements << (*ca)[i][k][j];
-			}
 
-			QVector<Complex> tempVec;
-			int N = elements.count();
-			for (int ii = 0; ii < N; ii++) {
-				tempVec << elements.at(N - 1 - ii);
-			}
-			tempVec << elements;
-			for (int ii = N; ii < N * 2; ii++) {
-				tempVec[ii] = tempVec.at(ii);
-			}
-			elements = tempVec;
-
-			rearrange(elements);
-			transform(elements, inverse);
-
-			elements = elements.mid(0, N);
-
-			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
-				(*ca)[i][k][j] = elements.at(k);
-			}
+		if (inverse) {
+			prepareFft(ca, i, 1, 2);
+			prepareFft(ca, i, 2, 1);
 		}
 
-		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
-			QVector<Complex> elements;
-			elements.reserve(ca->shape()[2]);
-			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				elements << (*ca)[i][j][k];
-			}
+		oneDFft(ca, i, 1, 2, inverse);
+		oneDFft(ca, i, 2, 1, inverse);
 
-			QVector<Complex> tempVec;
-			int N = elements.count();
-			for (int ii = 0; ii < N; ii++) {
-				tempVec << elements.at(N - 1 - ii);
-			}
-			tempVec << elements;
-			for (int ii = N; ii < N * 2; ii++) {
-				tempVec[ii] = tempVec.at(ii);
-			}
-			elements = tempVec;
-
-			rearrange(elements);
-			transform(elements, inverse);
-
-			elements = elements.mid(0, N);
-
-			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				(*ca)[i][j][k] = elements.at(k);
-			}
-		}
-
-		qreal c = -M_PI_2 / qreal(ca->shape()[1]);
-		mAlphaDC = 1.0 / sqrt(ca->shape()[1]);
-		mAlphaAC = sqrt(2.0 / ca->shape()[1]);
-		mW.resize(0);
-		for (int j = 0; j < ca->shape()[1]; j++) {
-			mW << Complex::fromPowerPhase(1, c * j) * Complex(alpha(j), 0);
-		}
-		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
-			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
-				(*ca)[i][k][j] *= mW.at(k);
-			}
-		}
-
-		c = -M_PI_2 / qreal(ca->shape()[2]);
-		mAlphaDC = 1.0 / sqrt(ca->shape()[2]);
-		mAlphaAC = sqrt(2.0 / ca->shape()[2]);
-		mW.resize(0);
-		for (int j = 0; j < ca->shape()[2]; j++) {
-			mW << Complex::fromPowerPhase(1, c * j) * Complex(alpha(j), 0);
-		}
-		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
-			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				(*ca)[i][j][k] *= mW.at(k);
-			}
+		if (!inverse) {
+			prepareFft(ca, i, 1, 2);
+			prepareFft(ca, i, 2, 1);
 		}
 	}
 }
