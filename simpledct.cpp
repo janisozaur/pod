@@ -36,18 +36,49 @@ void SimpleDCT::test()
 	transform(c, false);
 	qDebug() << "transformed by hand: " << c;
 
-	mAlphaDC = 1.0 / sqrt(c.count());
-	mAlphaAC = sqrt(2.0 / c.count());
+	bool matlab = false;
+	qreal fac;
+
+	if (!matlab) {
+		mAlphaDC = 1.0 / sqrt(2);
+		mAlphaAC = 1;
+		fac = sqrt(2.0 / c.count());
+	} else {
+		// matlab version:
+		mAlphaDC = 1.0 / sqrt(c.count());
+		mAlphaAC = sqrt(2.0 / c.count());
+		fac = 1;
+	}
+
+	for (int i = 0; i < c.count(); i++) {
+		c[i] *= Complex(alpha(i) * fac, 0);
+	}
+	qDebug() << "scaled by hand: " << c;
+
 	for (int i = 0; i < c.count(); i++) {
 		c[i] *= Complex(alpha(i), 0);
 	}
-	qDebug() << "scaled by hand: " << c;
+	transform(c, true);
+	if (!matlab) {
+		for (int i = 0; i < c.count(); i++) {
+			c[i] *= Complex(sqrt(2.0 / c.count()), 0);
+		}
+	}
+	qDebug() << "inverted by hand: " << c;
 
 	c.resize(0);
 	for (unsigned int i = 0; i < ca->shape()[3]; i++) {
 		c << (*ca)[0][0][i];
 	}
-	qDebug() << "transformed autmatically: " << c;
+	qDebug() << "transformed automatically: " << c;
+
+	perform(ca, true);
+	c.resize(0);
+	for (unsigned int i = 0; i < ca->shape()[3]; i++) {
+		c << (*ca)[0][0][i];
+	}
+	qDebug() << "inverted automatically: " << c;
+
 	delete ca;
 }
 
@@ -118,6 +149,25 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 {
 	Q_ASSERT(ca->num_dimensions() == 3);
 	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+		if (inverse) {
+			// alpha values get the N = (size of the innermost loop)
+			mAlphaDC = 1.0 / sqrt(ca->shape()[1]);
+			mAlphaAC = sqrt(2.0 / ca->shape()[1]);
+			for (unsigned int j = 0; j < ca->shape()[2]; j++) {
+				for (unsigned int k = 0; k < ca->shape()[1]; k++) {
+					(*ca)[i][k][j] *= Complex(alpha(k), 0);
+				}
+			}
+
+			mAlphaDC = 1.0 / sqrt(ca->shape()[2]);
+			mAlphaAC = sqrt(2.0 / ca->shape()[2]);
+			for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+				for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+					(*ca)[i][j][k] *= Complex(alpha(k), 0);
+				}
+			}
+		}
+
 		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
 			QVector<Complex> elements;
 			elements.reserve(ca->shape()[1]);
@@ -142,20 +192,22 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 			}
 		}
 
-		// alpha values get the N = (size of the innermost loop)
-		mAlphaDC = 1.0 / sqrt(ca->shape()[1]);
-		mAlphaAC = sqrt(2.0 / ca->shape()[1]);
-		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
-			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
-				(*ca)[i][k][j] *= Complex(alpha(k), 0);
+		if (!inverse) {
+			// alpha values get the N = (size of the innermost loop)
+			mAlphaDC = 1.0 / sqrt(ca->shape()[1]);
+			mAlphaAC = sqrt(2.0 / ca->shape()[1]);
+			for (unsigned int j = 0; j < ca->shape()[2]; j++) {
+				for (unsigned int k = 0; k < ca->shape()[1]; k++) {
+					(*ca)[i][k][j] *= Complex(alpha(k), 0);
+				}
 			}
-		}
 
-		mAlphaDC = 1.0 / sqrt(ca->shape()[2]);
-		mAlphaAC = sqrt(2.0 / ca->shape()[2]);
-		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
-			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				(*ca)[i][j][k] *= Complex(alpha(k), 0);
+			mAlphaDC = 1.0 / sqrt(ca->shape()[2]);
+			mAlphaAC = sqrt(2.0 / ca->shape()[2]);
+			for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+				for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+					(*ca)[i][j][k] *= Complex(alpha(k), 0);
+				}
 			}
 		}
 	}
@@ -175,7 +227,16 @@ void SimpleDCT::transform(QVector<Complex> &elements, bool inverse)
 	for (int i = 0; i < N; i++) {
 		Complex c;
 		for (int j = 0; j < N; j++) {
-			c.setReal(elements.at(j).real() * std::cos(M_PI_2 * (2 * j + 1) * i / N) + c.real());
+			qreal val = elements.at(j).real();
+			qreal fac1, fac2;
+			if (!inverse) {
+				fac1 = (2 * j + 1);
+				fac2 = i;
+			} else {
+				fac1 = (2 * i + 1);
+				fac2 = j;
+			}
+			c.setReal(val * std::cos(M_PI_2 * fac1 * fac2 / N) + c.real());
 		}
 		result << c;
 	}
