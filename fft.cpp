@@ -115,35 +115,44 @@ void FFT::rearrange(QVector<Complex> &elements)
 	}
 }
 
+void FFT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
+{
+	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
+		QVector<Complex> elements;
+		elements.reserve(ca->shape()[idx1]);
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			elements << (*ca)[idx][k][j];
+		}
+		rearrange(elements);
+		transform(elements, inverse);
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			(*ca)[idx][k][j] = elements.at(k);
+		}
+	}
+}
+
+void FFT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
+{
+	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
+		QVector<Complex> elements;
+		elements.reserve(ca->shape()[idx1]);
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			elements << (*ca)[idx][j][k];
+		}
+		rearrange(elements);
+		transform(elements, inverse);
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			(*ca)[idx][j][k] = elements.at(k);
+		}
+	}
+}
+
 void FFT::perform(ComplexArray *ca, bool inverse)
 {
 	Q_ASSERT(ca->num_dimensions() == 3);
 	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
-		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
-			QVector<Complex> elements;
-			elements.reserve(ca->shape()[1]);
-			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
-				elements << (*ca)[i][k][j];
-			}
-			rearrange(elements);
-			transform(elements, inverse);
-			for (unsigned int k = 0; k < ca->shape()[1]; k++) {
-				(*ca)[i][k][j] = elements.at(k);
-			}
-		}
-
-		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
-			QVector<Complex> elements;
-			elements.reserve(ca->shape()[2]);
-			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				elements << (*ca)[i][j][k];
-			}
-			rearrange(elements);
-			transform(elements, inverse);
-			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				(*ca)[i][j][k] = elements.at(k);
-			}
-		}
+		oneDFftH(ca, i, 1, 2, inverse);
+		oneDFftV(ca, i, 2, 1, inverse);
 	}
 }
 

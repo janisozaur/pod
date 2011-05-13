@@ -22,9 +22,10 @@ public slots:
 	virtual bool setup(const FilterData &data);
 
 private:
-
 	void rearrange(QVector<Complex> &elements);
 	void transform(QVector<Complex> &elements, bool inverse);
+	void oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
+	void oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 
 	ComplexArray *mCA;
 	QSize mSize;
