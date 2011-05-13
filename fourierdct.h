@@ -26,6 +26,7 @@ private:
 	void oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 	void oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 	void prepareFft(ComplexArray *ca, int idx, int idx1, int idx2);
+	void test();
 	qreal alpha(int u) const;
 
 	ComplexArray *mCA;

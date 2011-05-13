@@ -9,11 +9,80 @@ FourierDCT::FourierDCT(QObject *parent) :
 	ImageTransformFilter(parent),
 	mCA(NULL)
 {
+	test();
 }
 
 FourierDCT::~FourierDCT()
 {
 	delete mCA;
+}
+
+void FourierDCT::test()
+{
+	QVector<Complex> c;
+	// http://www.hydrogenaudio.org/forums/index.php?showtopic=39574
+	qDebug() << "FourierDCT test. expected values: 5.0000   -2.2304         0   -0.1585";
+	c << Complex(1, 0);
+	c << Complex(2, 0);
+	c << Complex(3, 0);
+	c << Complex(4, 0);
+	qDebug() << "input: " << c;
+
+	ComplexArray *ca = new ComplexArray(boost::extents[1][1][c.count()]);
+	for (int i = 0; i < c.count(); i++) {
+		(*ca)[0][0][i] = c.at(i);
+	}
+	//perform(ca);
+	oneDFftV(ca, 0, 2, 1, false);
+
+	transform(c, false);
+	qDebug() << "transformed by hand: " << c;
+
+	bool matlab = false;
+	qreal fac;
+
+	if (!matlab) {
+		mAlphaDC = 1.0 / sqrt(2);
+		mAlphaAC = 1;
+		fac = sqrt(2.0 / c.count());
+	} else {
+		// matlab version:
+		mAlphaDC = 1.0 / sqrt(c.count());
+		mAlphaAC = sqrt(2.0 / c.count());
+		fac = 1;
+	}
+
+	for (int i = 0; i < c.count(); i++) {
+		c[i] *= Complex(alpha(i) * fac, 0);
+	}
+	qDebug() << "scaled by hand: " << c;
+
+	for (int i = 0; i < c.count(); i++) {
+		c[i] *= Complex(alpha(i), 0);
+	}
+	transform(c, true);
+	if (!matlab) {
+		for (int i = 0; i < c.count(); i++) {
+			c[i] *= Complex(sqrt(2.0 / c.count()), 0);
+		}
+	}
+	qDebug() << "inverted by hand: " << c;
+
+	c.resize(0);
+	for (unsigned int i = 0; i < ca->shape()[2]; i++) {
+		c << (*ca)[0][0][i];
+	}
+	qDebug() << "transformed automatically: " << c;
+
+	//perform(ca, true);
+	oneDFftV(ca, 0, 2, 1, true);
+	c.resize(0);
+	for (unsigned int i = 0; i < ca->shape()[2]; i++) {
+		c << (*ca)[0][0][i];
+	}
+	qDebug() << "inverted automatically: " << c;
+
+	delete ca;
 }
 
 bool FourierDCT::setup(const FilterData &data)
