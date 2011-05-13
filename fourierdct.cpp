@@ -118,7 +118,7 @@ qreal FourierDCT::alpha(int u) const
 	return (u == 0) ? mAlphaDC : mAlphaAC;
 }
 
-void FourierDCT::oneDFft(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
+void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		QVector<Complex> elements;
@@ -139,13 +139,34 @@ void FourierDCT::oneDFft(ComplexArray *ca, int idx, int idx1, int idx2, bool inv
 	}
 }
 
+void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
+{
+	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
+		QVector<Complex> elements;
+		elements.reserve(ca->shape()[idx1]);
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k += 2) {
+			elements << (*ca)[idx][j][k];
+		}
+		for (int k = ca->shape()[idx1] - 1; k >= 0; k -= 2) {
+			elements << (*ca)[idx][j][k];
+		}
+
+		rearrange(elements);
+		transform(elements, inverse);
+
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			(*ca)[idx][j][k] = elements.at(k);
+		}
+	}
+}
+
 void FourierDCT::prepareFft(ComplexArray *ca, int idx, int idx1, int idx2)
 {
 	qreal c = -M_PI_2 / qreal(ca->shape()[idx1]);
 	mAlphaDC = 1.0 / sqrt(ca->shape()[idx1]);
 	mAlphaAC = sqrt(2.0 / ca->shape()[idx1]);
 	mW.resize(0);
-	for (int j = 0; j < ca->shape()[1]; j++) {
+	for (unsigned int j = 0; j < ca->shape()[1]; j++) {
 		mW << Complex::fromPowerPhase(1, c * j) * Complex(alpha(j), 0);
 	}
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
@@ -166,8 +187,8 @@ void FourierDCT::perform(ComplexArray *ca, bool inverse)
 			prepareFft(ca, i, 2, 1);
 		}
 
-		oneDFft(ca, i, 1, 2, inverse);
-		oneDFft(ca, i, 2, 1, inverse);
+		oneDFftH(ca, i, 1, 2, inverse);
+		oneDFftV(ca, i, 2, 1, inverse);
 
 		if (!inverse) {
 			prepareFft(ca, i, 1, 2);
