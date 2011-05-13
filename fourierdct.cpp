@@ -344,7 +344,7 @@ DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Forma
 		}
 	}
 	result = result.rgbSwapped();
-	PhotoWindow *pw = new PhotoWindow(result, title + ", IFFT", p);
+	PhotoWindow *pw = new PhotoWindow(result, title + ", IFDCT", p);
 	return pw;
 }
 
