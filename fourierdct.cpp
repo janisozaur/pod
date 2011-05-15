@@ -51,8 +51,10 @@ void FourierDCT::test()
 	qDebug() << "scaled by hand: " << c;
 
 	for (int i = 0; i < c.count(); i++) {
-		c[i] *= Complex(alpha(i), 0);
+		c[i] /= mScale.at(i);
 	}
+	qDebug() << "divided by hand: " << c;
+	rearrange(c);
 	transform(c, true);
 	qDebug() << "inverted by hand: " << c;
 
