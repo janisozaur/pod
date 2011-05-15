@@ -22,6 +22,7 @@ public slots:
 
 private:
 	void rearrange(QVector<Complex> &elements);
+	void rearrangeDct(QVector<Complex> &elements);
 	void transform(QVector<Complex> &elements, bool inverse);
 	void oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 	void oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);

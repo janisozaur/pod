@@ -39,10 +39,7 @@ void FourierDCT::test()
 	}
 	oneDFftV(ca, 0, 2, 1, false);
 
-	c[1].setReal(3);
-	c[2].setReal(4);
-	c[3].setReal(2);
-
+	rearrangeDct(c);
 	rearrange(c);
 	transform(c, false);
 	qDebug() << "transformed by hand: " << c;
@@ -171,6 +168,19 @@ void FourierDCT::rearrange(QVector<Complex> &elements)
 
 		target |= mask;
 	}
+}
+
+
+void FourierDCT::rearrangeDct(QVector<Complex> &elements)
+{
+	QVector<Complex> result;
+	for (int k = 0; k < elements.size(); k += 2) {
+		result << elements.at(k);
+	}
+	for (int k = elements.size() - 1; k >= 0; k -= 2) {
+		result << elements.at(k);
+	}
+	elements = result;
 }
 
 qreal FourierDCT::alpha(int u) const
