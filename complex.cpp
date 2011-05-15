@@ -93,6 +93,18 @@ Complex &Complex::operator*=(const qreal &rhs)
 	return *this;
 }
 
+Complex &Complex::operator/=(const Complex &rhs)
+{
+	// http://en.wikipedia.org/wiki/Complex_number#Multiplication_and_division
+	QVector2D result;
+	result.setX((real() * rhs.real() + imaginary() * rhs.imaginary()) /
+				(rhs.real() * rhs.real() + rhs.imaginary() * rhs.imaginary()));
+	result.setY((imaginary() * rhs.real() - real() * rhs.imaginary()) /
+				(rhs.real() * rhs.real() + rhs.imaginary() * rhs.imaginary()));
+	this->mNumber = result;
+	return *this;
+}
+
 const Complex Complex::operator +(const Complex &rhs) const
 {
 	return Complex(*this) += rhs;
@@ -111,6 +123,11 @@ const Complex Complex::operator *(const Complex &rhs) const
 const Complex Complex::operator *(const qreal &rhs) const
 {
 	return Complex(*this) *= rhs;
+}
+
+const Complex Complex::operator /(const Complex &rhs) const
+{
+	return Complex(*this) /= rhs;
 }
 
 bool Complex::operator ==(const Complex &rhs) const
