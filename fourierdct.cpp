@@ -187,6 +187,13 @@ qreal FourierDCT::alpha(int u) const
 	return (u == 0) ? mAlphaDC : mAlphaAC;
 }
 
+void FourierDCT::prepareScale(int n)
+{
+	for (int i = 0; i < n; i++) {
+		mScale << Complex::fromPowerPhase(1, -M_PI_2 * i / n) * alpha(i);
+	}
+}
+
 void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {

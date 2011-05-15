@@ -25,6 +25,7 @@ private:
 	void transform(QVector<Complex> &elements, bool inverse);
 	void oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 	void oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
+	void prepareScale(int n);
 	void prepareFft(ComplexArray *ca, int idx, int idx1, int idx2);
 	void test();
 	qreal alpha(int u) const;
@@ -32,6 +33,7 @@ private:
 	ComplexArray *mCA;
 	QSize mSize;
 	QVector<Complex> mW;
+	QVector<Complex> mScale;
 	qreal mAlphaAC, mAlphaDC;
 
 };
