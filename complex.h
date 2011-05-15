@@ -25,9 +25,11 @@ public:
 	Complex &operator+=(const Complex &rhs);
 	Complex &operator-=(const Complex &rhs);
 	Complex &operator*=(const Complex &rhs);
+	Complex &operator*=(const qreal &rhs);
 	const Complex operator +(const Complex &rhs) const;
 	const Complex operator -(const Complex &rhs) const;
 	const Complex operator *(const Complex &rhs) const;
+	const Complex operator *(const qreal &rhs) const;
 	bool operator==(const Complex &rhs) const;
 	bool operator!=(const Complex &rhs) const;
 	friend QDebug operator<<(QDebug &stream, const Complex &rhs);
