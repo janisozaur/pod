@@ -266,7 +266,9 @@ void FourierDCT::perform(ComplexArray *ca, bool inverse)
 			prepareFft(ca, i, 2, 1);
 		}
 
+		prepareScale(ca->shape()[1]);
 		oneDFftH(ca, i, 1, 2, inverse);
+		prepareScale(ca->shape()[2]);
 		oneDFftV(ca, i, 2, 1, inverse);
 
 		if (!inverse) {
