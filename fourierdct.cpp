@@ -28,32 +28,28 @@ void FourierDCT::test()
 	c << Complex(4, 0);
 	qDebug() << "input: " << c;
 
+	mAlphaDC = 1.0 / sqrt(c.count());
+	mAlphaAC = sqrt(2.0 / c.count());
+	prepareScale(c.size());
+	qDebug() << mScale;
+
 	ComplexArray *ca = new ComplexArray(boost::extents[1][1][c.count()]);
-	for (int i = 0; i < c.count(); i++) {
-		(*ca)[0][0][i] = c.at(i);
+	for (int i = 0; i < c.count(); i += 1) {
+		(*ca)[0][0][i] = Complex(c.at(i).real(), 0);
 	}
-	//perform(ca);
 	oneDFftV(ca, 0, 2, 1, false);
 
+	c[1].setReal(3);
+	c[2].setReal(4);
+	c[3].setReal(2);
+
+	rearrange(c);
 	transform(c, false);
 	qDebug() << "transformed by hand: " << c;
 
-	bool matlab = false;
-	qreal fac;
-
-	if (!matlab) {
-		mAlphaDC = 1.0 / sqrt(2);
-		mAlphaAC = 1;
-		fac = sqrt(2.0 / c.count());
-	} else {
-		// matlab version:
-		mAlphaDC = 1.0 / sqrt(c.count());
-		mAlphaAC = sqrt(2.0 / c.count());
-		fac = 1;
-	}
 
 	for (int i = 0; i < c.count(); i++) {
-		c[i] *= Complex(alpha(i) * fac, 0);
+		c[i] *= mScale.at(i);
 	}
 	qDebug() << "scaled by hand: " << c;
 
@@ -61,11 +57,6 @@ void FourierDCT::test()
 		c[i] *= Complex(alpha(i), 0);
 	}
 	transform(c, true);
-	if (!matlab) {
-		for (int i = 0; i < c.count(); i++) {
-			c[i] *= Complex(sqrt(2.0 / c.count()), 0);
-		}
-	}
 	qDebug() << "inverted by hand: " << c;
 
 	c.resize(0);
@@ -210,7 +201,7 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		transform(elements, inverse);
 
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][k][j] = elements.at(k);
+			(*ca)[idx][k][j] = elements.at(k) * mScale.at(k);
 		}
 	}
 }
@@ -231,7 +222,7 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		transform(elements, inverse);
 
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][j][k] = elements.at(k);
+			(*ca)[idx][j][k] = elements.at(k) * mScale.at(k);
 		}
 	}
 }
