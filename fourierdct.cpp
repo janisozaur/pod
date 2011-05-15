@@ -295,6 +295,12 @@ void FourierDCT::transform(QVector<Complex> &elements, bool inverse)
 			factor = multiplier * factor + factor;
 		}
 	}
+	if (inverse) {
+		qreal scale = 1.0 / elements.size();
+		for (int i = 0; i < elements.size(); i++) {
+			elements[i] *= scale;
+		}
+	}
 }
 
 DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *p)
