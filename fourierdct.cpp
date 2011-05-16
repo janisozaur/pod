@@ -35,7 +35,7 @@ void FourierDCT::test()
 	qDebug() << mScale;
 
 
-	ComplexArray *ca = new ComplexArray(boost::extents[1][1][c.count()]);
+	ComplexArray *ca = new ComplexArray(boost::extents[2][1][c.count()]);
 	for (int i = 0; i < c.count(); i += 1) {
 		(*ca)[0][0][i] = Complex(c.at(i).real(), 0);
 	}
@@ -88,12 +88,12 @@ void FourierDCT::test()
 	}
 	qDebug() << "transformed automatically: " << c;
 
-	/*c.resize(0);
+	c.resize(0);
 	prepareFftV(ca, 0, 2, 1);
 	for (unsigned int i = 0; i < ca->shape()[2]; i++) {
 		c << (*ca)[0][0][i];
 	}
-	qDebug() << "scaled automatically: " << c;*/
+	qDebug() << "scaled automatically: " << c;
 
 	//perform(ca, true);
 	oneDFftV(ca, 0, 2, 1, true);
@@ -136,13 +136,14 @@ bool FourierDCT::setup(const FilterData &data)
 		delete mCA;
 		int w = mSize.width();
 		int h = mSize.height();
-		mCA = new ComplexArray(boost::extents[layers][w][h]);
+		mCA = new ComplexArray(boost::extents[layers * 2][w][h]);
+		mFirst = false;
 
 		// fill only the data that exists in the image
 		for (int i = 0; i < layers; i++) {
 			for (int y = 0; y < mImg.height(); y++) {
 				for (int x = 0; x < mImg.width(); x++) {
-					(*mCA)[i][y][x] = Complex(extractColor(mImg.pixel(x, y), i), 0);
+					(*mCA)[i * 2][y][x] = Complex(extractColor(mImg.pixel(x, y), i), 0);
 				}
 			}
 		}
@@ -230,9 +231,10 @@ void FourierDCT::prepareScale(int n)
 void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
 	prepareScale(ca->shape()[idx1]);
+	QVector<Complex> elements;
+	elements.reserve(ca->shape()[idx1]);
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
-		QVector<Complex> elements;
-		elements.reserve(ca->shape()[idx1]);
+		elements.resize(0);
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 			elements << (*ca)[idx][k][j];
 		}
@@ -243,8 +245,33 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		rearrange(elements);
 		transform(elements, inverse);
 
-		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][k][j] = Complex((elements.at(k) * mScale.at(k)).real(), 0);
+		if (!mFirst) {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k) * mScale.at(k);
+				(*ca)[idx][k][j] = Complex(c.real(), 0);
+				(*ca)[idx + 1][k][j] = c;
+			}
+			mFirst = true;
+		} else {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k) * mScale.at(k);
+				(*ca)[idx][k][j] = Complex(c.real(), 0);
+			}
+
+			elements.resize(0);
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				elements << (*ca)[idx + 1][k][j];
+			}
+
+			if (!inverse) {
+				rearrangeDct(elements);
+			}
+			rearrange(elements);
+			transform(elements, inverse);
+
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				(*ca)[idx + 1][k][j] = elements.at(k) * mScale.at(k);
+			}
 		}
 	}
 }
@@ -252,9 +279,10 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
 	prepareScale(ca->shape()[idx1]);
+	QVector<Complex> elements;
+	elements.reserve(ca->shape()[idx1]);
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
-		QVector<Complex> elements;
-		elements.reserve(ca->shape()[idx1]);
+		elements.resize(0);
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 			elements << (*ca)[idx][j][k];
 		}
@@ -265,8 +293,34 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		rearrange(elements);
 		transform(elements, inverse);
 
-		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][j][k] = Complex((elements.at(k) * mScale.at(k)).real(), 0);
+		if (!mFirst) {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k) * mScale.at(k);
+				(*ca)[idx][j][k] = Complex(c.real(), 0);
+				(*ca)[idx + 1][j][k] = c;
+			}
+			mFirst = true;
+		} else {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k) * mScale.at(k);
+				(*ca)[idx][j][k] = Complex(c.real(), 0);
+			}
+
+			elements.resize(0);
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				elements << (*ca)[idx + 1][j][k];
+			}
+
+			if (!inverse) {
+				rearrangeDct(elements);
+			}
+			rearrange(elements);
+			transform(elements, inverse);
+
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k) * mScale.at(k);
+				(*ca)[idx + 1][j][k] = c;
+			}
 		}
 	}
 }
@@ -297,19 +351,19 @@ void FourierDCT::perform(ComplexArray *ca, bool inverse)
 {
 	Q_ASSERT(ca->num_dimensions() == 3);
 	mW.reserve(qMax(ca->shape()[1], ca->shape()[2]));
-	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+	for (unsigned int i = 0; i < ca->shape()[0]; i += 2) {
 
 		if (inverse) {
-			prepareFftH(ca, i, 1, 2);
 			prepareFftV(ca, i, 2, 1);
+			prepareFftH(ca, i, 1, 2);
 		}
 
 		oneDFftV(ca, i, 2, 1, inverse);
 		oneDFftH(ca, i, 1, 2, inverse);
 
 		if (!inverse) {
-			prepareFftH(ca, i, 1, 2);
 			prepareFftV(ca, i, 2, 1);
+			prepareFftH(ca, i, 1, 2);
 		}
 	}
 
@@ -360,7 +414,7 @@ DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Forma
 		}
 		result.setColorTable(colors);
 	}
-	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+	for (unsigned int i = 0; i < ca->shape()[0]; i += 2) {
 		qreal min = 0;
 		qreal max = 0;
 		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
@@ -422,7 +476,7 @@ const ImageTransformFilter::QImages FourierDCT::complexToImages(const ComplexArr
 		phaseImage.fill(Qt::black);
 		magnitudeImage.fill(Qt::black);
 	}
-	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+	for (unsigned int i = 0; i < ca->shape()[0]; i += 2) {
 		qreal minp = 0;
 		qreal maxp = 0;
 		qreal minm = 0;
@@ -451,7 +505,7 @@ const ImageTransformFilter::QImages FourierDCT::complexToImages(const ComplexArr
 				{
 					QVector3D oldPixel = cp.pixel(k, j, phaseImage);
 					QVector3D newPixel;
-					switch (i) {
+					switch (i / 2) {
 						case 0:
 							newPixel.setX(p);
 							break;
@@ -476,7 +530,7 @@ const ImageTransformFilter::QImages FourierDCT::complexToImages(const ComplexArr
 					p = c * log(1.0 + p);
 					QVector3D oldPixel = cp.pixel(k, j, magnitudeImage);
 					QVector3D newPixel;
-					switch (i) {
+					switch (i / 2) {
 						case 0:
 							newPixel.setX(p);
 							break;

@@ -37,7 +37,7 @@ private:
 	QVector<Complex> mW;
 	QVector<Complex> mScale;
 	qreal mAlphaAC, mAlphaDC;
-
+	bool mFirst;
 };
 
 #endif // FOURIERDCT_H
