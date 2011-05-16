@@ -215,7 +215,7 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		transform(elements, inverse);
 
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][k][j] = elements.at(k) * mScale.at(k);
+			(*ca)[idx][k][j] = Complex((elements.at(k) * mScale.at(k)).real(), 0);
 		}
 	}
 }
@@ -237,7 +237,7 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		transform(elements, inverse);
 
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][j][k] = elements.at(k) * mScale.at(k);
+			(*ca)[idx][j][k] = Complex((elements.at(k) * mScale.at(k)).real(), 0);
 		}
 	}
 }
