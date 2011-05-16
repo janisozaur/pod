@@ -105,6 +105,12 @@ Complex &Complex::operator/=(const Complex &rhs)
 	return *this;
 }
 
+Complex &Complex::operator/=(const qreal &rhs)
+{
+	this->mNumber /= rhs;
+	return *this;
+}
+
 const Complex Complex::operator +(const Complex &rhs) const
 {
 	return Complex(*this) += rhs;
@@ -126,6 +132,11 @@ const Complex Complex::operator *(const qreal &rhs) const
 }
 
 const Complex Complex::operator /(const Complex &rhs) const
+{
+	return Complex(*this) /= rhs;
+}
+
+const Complex Complex::operator /(const qreal &rhs) const
 {
 	return Complex(*this) /= rhs;
 }
