@@ -28,16 +28,22 @@ void FourierDCT::test()
 	c << Complex(4, 0);
 	qDebug() << "input: " << c;
 
+
 	mAlphaDC = 1.0 / sqrt(c.count());
 	mAlphaAC = sqrt(2.0 / c.count());
 	prepareScale(c.size());
 	qDebug() << mScale;
+
 
 	ComplexArray *ca = new ComplexArray(boost::extents[1][1][c.count()]);
 	for (int i = 0; i < c.count(); i += 1) {
 		(*ca)[0][0][i] = Complex(c.at(i).real(), 0);
 	}
 	oneDFftV(ca, 0, 2, 1, false);
+
+	mAlphaDC = 1.0 / sqrt(c.count());
+	mAlphaAC = sqrt(2.0 / c.count());
+	prepareScale(c.size());
 
 	rearrangeDct(c);
 	rearrange(c);
@@ -46,14 +52,32 @@ void FourierDCT::test()
 
 
 	for (int i = 0; i < c.count(); i++) {
-		c[i] *= mScale.at(i);
+		c[i] *= mScale.at(i) * alpha(i);
 	}
 	qDebug() << "scaled by hand: " << c;
+	for (int i = 0; i < c.size(); i++) {
+		Complex g = c.at(i) * mScale.at(i) * alpha(i);
+		//qDebug() << g;
+		Complex x = c.at(i) * mScale.at(i);
+		x *= alpha(i);
+		//qDebug() << x;
+		Complex x2 = c.at(i) * alpha(i);
+		x2 *= mScale.at(i);
+		//qDebug() << x2;
+		QVector<Complex> www;
+		www << g;
+		www << x;
+		www << x2;
+		qDebug() << www;
+	}
 
 	for (int i = 0; i < c.count(); i++) {
-		c[i] /= mScale.at(i);
+		c[i] /= mScale.at(i) * alpha(i);
 	}
 	qDebug() << "divided by hand: " << c;
+	for (int i = 0; i < c.size(); i++) {
+		c[i].setImaginary(0);
+	}
 	rearrange(c);
 	transform(c, true);
 	qDebug() << "inverted by hand: " << c;
@@ -63,6 +87,13 @@ void FourierDCT::test()
 		c << (*ca)[0][0][i];
 	}
 	qDebug() << "transformed automatically: " << c;
+
+	/*c.resize(0);
+	prepareFftV(ca, 0, 2, 1);
+	for (unsigned int i = 0; i < ca->shape()[2]; i++) {
+		c << (*ca)[0][0][i];
+	}
+	qDebug() << "scaled automatically: " << c;*/
 
 	//perform(ca, true);
 	oneDFftV(ca, 0, 2, 1, true);
