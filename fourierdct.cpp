@@ -192,8 +192,9 @@ qreal FourierDCT::alpha(int u) const
 
 void FourierDCT::prepareScale(int n)
 {
+	mScale.resize(0);
 	for (int i = 0; i < n; i++) {
-		mScale << Complex::fromPowerPhase(1, -M_PI_2 * i / n) * alpha(i);
+		mScale << Complex::fromPowerPhase(1, -M_PI_2 * i / n);
 	}
 }
 
