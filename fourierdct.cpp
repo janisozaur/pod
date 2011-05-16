@@ -136,8 +136,6 @@ DisplayWindow *FourierDCT::apply(QString windowBaseName)
 	ComplexArray *ca = new ComplexArray(boost::extents[layers][w][h]);
 	*ca = *mCA;
 
-	const QImages images = complexToImages(mCA, mFormat);
-
 	// parent's parent should be MainWindow
 	QWidget *mainWindow = q_check_ptr(qobject_cast<QWidget *>(parent()->parent()));
 
