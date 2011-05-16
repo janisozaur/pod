@@ -143,5 +143,5 @@ bool Complex::operator !=(const Complex &rhs) const
 QDebug operator <<(QDebug &stream, const Complex &rhs)
 {
 	stream << "Complex(" << rhs.mNumber.x() << "," << rhs.mNumber.y() << ")";
-	return stream.space();
+	return stream.nospace();
 }
