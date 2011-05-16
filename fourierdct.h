@@ -27,7 +27,8 @@ private:
 	void oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 	void oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse);
 	void prepareScale(int n);
-	void prepareFft(ComplexArray *ca, int idx, int idx1, int idx2);
+	void prepareFftH(ComplexArray *ca, int idx, int idx1, int idx2);
+	void prepareFftV(ComplexArray *ca, int idx, int idx1, int idx2);
 	void test();
 	qreal alpha(int u) const;
 

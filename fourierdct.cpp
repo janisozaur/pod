@@ -200,6 +200,7 @@ void FourierDCT::prepareScale(int n)
 
 void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
+	prepareScale(ca->shape()[idx1]);
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		QVector<Complex> elements;
 		elements.reserve(ca->shape()[idx1]);
@@ -221,6 +222,7 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 
 void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
+	prepareScale(ca->shape()[idx1]);
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		QVector<Complex> elements;
 		elements.reserve(ca->shape()[idx1]);
@@ -240,18 +242,24 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 	}
 }
 
-void FourierDCT::prepareFft(ComplexArray *ca, int idx, int idx1, int idx2)
+void FourierDCT::prepareFftH(ComplexArray *ca, int idx, int idx1, int idx2)
 {
-	qreal c = -M_PI_2 / qreal(ca->shape()[idx1]);
 	mAlphaDC = 1.0 / sqrt(ca->shape()[idx1]);
 	mAlphaAC = sqrt(2.0 / ca->shape()[idx1]);
-	mW.resize(0);
-	for (unsigned int j = 0; j < ca->shape()[1]; j++) {
-		mW << Complex::fromPowerPhase(1, c * j) * Complex(alpha(j), 0);
-	}
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			(*ca)[idx][k][j] *= mW.at(k);
+			(*ca)[idx][k][j] *= alpha(k);
+		}
+	}
+}
+
+void FourierDCT::prepareFftV(ComplexArray *ca, int idx, int idx1, int idx2)
+{
+	mAlphaDC = 1.0 / sqrt(ca->shape()[idx1]);
+	mAlphaAC = sqrt(2.0 / ca->shape()[idx1]);
+	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
+		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+			(*ca)[idx][j][k] *= alpha(k);
 		}
 	}
 }
@@ -263,20 +271,19 @@ void FourierDCT::perform(ComplexArray *ca, bool inverse)
 	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
 
 		if (inverse) {
-			prepareFft(ca, i, 1, 2);
-			prepareFft(ca, i, 2, 1);
+			prepareFftH(ca, i, 1, 2);
+			prepareFftV(ca, i, 2, 1);
 		}
 
-		prepareScale(ca->shape()[1]);
-		oneDFftH(ca, i, 1, 2, inverse);
-		prepareScale(ca->shape()[2]);
 		oneDFftV(ca, i, 2, 1, inverse);
+		oneDFftH(ca, i, 1, 2, inverse);
 
 		if (!inverse) {
-			prepareFft(ca, i, 1, 2);
-			prepareFft(ca, i, 2, 1);
+			prepareFftH(ca, i, 1, 2);
+			prepareFftV(ca, i, 2, 1);
 		}
 	}
+
 }
 
 void FourierDCT::transform(QVector<Complex> &elements, bool inverse)
