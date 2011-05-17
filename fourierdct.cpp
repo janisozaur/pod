@@ -257,6 +257,11 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 	if (inverse) {
 		idx++;
 	}
+	bool full = true;
+	if (!mFirst) {
+		full = false;
+		mFirst = true;
+	}
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		elements.resize(0);
 		if (inverse) {
@@ -286,13 +291,12 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 			continue;
 		}
 
-		if (!mFirst) {
+		if (!full) {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 				Complex c = elements.at(k) * mScale.at(k);
 				(*ca)[idx][k][j] = Complex(c.real(), 0);
 				(*ca)[idx + 1][k][j] = c;
 			}
-			mFirst = true;
 		} else {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 				Complex c = elements.at(k) * mScale.at(k);
@@ -325,6 +329,11 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 	if (inverse) {
 		idx++;
 	}
+	bool full = true;
+	if (!mFirst) {
+		full = false;
+		mFirst = true;
+	}
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		elements.resize(0);
 		if (inverse) {
@@ -354,13 +363,12 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 			continue;
 		}
 
-		if (!mFirst) {
+		if (!full) {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 				Complex c = elements.at(k) * mScale.at(k);
 				(*ca)[idx][j][k] = Complex(c.real(), 0);
 				(*ca)[idx + 1][j][k] = c;
 			}
-			mFirst = true;
 		} else {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 				Complex c = elements.at(k) * mScale.at(k);
