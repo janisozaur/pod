@@ -99,7 +99,7 @@ void FourierDCT::test()
 	oneDFftV(ca, 0, 2, 1, true);
 	c.resize(0);
 	for (unsigned int i = 0; i < ca->shape()[2]; i++) {
-		c << (*ca)[0][0][i];
+		c << (*ca)[1][0][i];
 	}
 	qDebug() << "inverted automatically: " << c;
 
@@ -203,14 +203,22 @@ void FourierDCT::rearrange(QVector<Complex> &elements)
 }
 
 
-void FourierDCT::rearrangeDct(QVector<Complex> &elements)
+void FourierDCT::rearrangeDct(QVector<Complex> &elements, bool inverse)
 {
 	QVector<Complex> result;
-	for (int k = 0; k < elements.size(); k += 2) {
-		result << elements.at(k);
-	}
-	for (int k = elements.size() - 1; k >= 0; k -= 2) {
-		result << elements.at(k);
+	if (!inverse) {
+		for (int k = 0; k < elements.size(); k += 2) {
+			result << elements.at(k);
+		}
+		for (int k = elements.size() - 1; k >= 0; k -= 2) {
+			result << elements.at(k);
+		}
+	} else {
+		result.resize(elements.size());
+		for (int i = 0; i < elements.size() / 2; i++) {
+			result[2 * i] = elements.at(i);
+			result[2 * i + 1] = elements.at(elements.size() - 1 - i);
+		}
 	}
 	elements = result;
 }
@@ -233,10 +241,19 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 	prepareScale(ca->shape()[idx1]);
 	QVector<Complex> elements;
 	elements.reserve(ca->shape()[idx1]);
+	if (inverse) {
+		idx++;
+	}
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		elements.resize(0);
-		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			elements << (*ca)[idx][k][j];
+		if (inverse) {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				elements << (*ca)[idx][k][j] / mScale.at(k);
+			}
+		} else {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				elements << (*ca)[idx][k][j];
+			}
 		}
 
 		if (!inverse) {
@@ -244,6 +261,17 @@ void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		}
 		rearrange(elements);
 		transform(elements, inverse);
+		if (inverse) {
+			rearrangeDct(elements, true);
+		}
+
+		if (inverse) {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k);
+				(*ca)[idx][k][j] = c;
+			}
+			continue;
+		}
 
 		if (!mFirst) {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
@@ -281,10 +309,19 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 	prepareScale(ca->shape()[idx1]);
 	QVector<Complex> elements;
 	elements.reserve(ca->shape()[idx1]);
+	if (inverse) {
+		idx++;
+	}
 	for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 		elements.resize(0);
-		for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
-			elements << (*ca)[idx][j][k];
+		if (inverse) {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				elements << (*ca)[idx][j][k] / mScale.at(k);
+			}
+		} else {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				elements << (*ca)[idx][j][k];
+			}
 		}
 
 		if (!inverse) {
@@ -292,6 +329,17 @@ void FourierDCT::oneDFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool in
 		}
 		rearrange(elements);
 		transform(elements, inverse);
+		if (inverse) {
+			rearrangeDct(elements, true);
+		}
+
+		if (inverse) {
+			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
+				Complex c = elements.at(k);
+				(*ca)[idx][j][k] = c;
+			}
+			continue;
+		}
 
 		if (!mFirst) {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
@@ -355,6 +403,7 @@ void FourierDCT::prepareFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool
 			}
 		}
 	} else {
+		idx++;
 		for (unsigned int j = 0; j < ca->shape()[idx2]; j++) {
 			for (unsigned int k = 0; k < ca->shape()[idx1]; k++) {
 				(*ca)[idx][j][k] /= alpha(k);
