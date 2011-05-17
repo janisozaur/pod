@@ -29,6 +29,7 @@ private:
 	void prepareScale(int n);
 	void prepareFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse = false);
 	void prepareFftV(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse = false);
+	void display(ComplexArray *ca, int idx = -1);
 	void test();
 	qreal alpha(int u) const;
 

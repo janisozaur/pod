@@ -236,6 +236,19 @@ void FourierDCT::prepareScale(int n)
 	}
 }
 
+void FourierDCT::display(ComplexArray *ca, int idx)
+{
+	for (int i = (idx == -1 ? 0 : idx); i < (idx == -1 ? ca->shape()[0] : idx + 1); i++) {
+		for (int j = 0; j < ca->shape()[1]; j++) {
+			QVector<Complex> v;
+			for (int k = 0; k < ca->shape()[2]; k++) {
+				v << (*ca)[i][j][k];
+			}
+			qDebug() << v;
+		}
+	}
+}
+
 void FourierDCT::oneDFftH(ComplexArray *ca, int idx, int idx1, int idx2, bool inverse)
 {
 	prepareScale(ca->shape()[idx1]);
