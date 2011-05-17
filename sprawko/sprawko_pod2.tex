@@ -1,0 +1,136 @@
+\documentclass{classrep}
+\usepackage[utf8]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[polish]{babel}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{multicol}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{subfigure}
+\usepackage{hyperref}
+
+\studycycle{Informatyka, studia dzienne, II st.}
+\coursesemester{I}
+
+\coursename{Przetwarzanie obrazów i dźwięków}
+\courseyear{2010/2011}
+
+\courseteacher{dr inż. Bartłomiej Stasiak}
+\coursegroup{micmic}
+\svnurl{https://serce.ics.p.lodz.pl/svn/labs/poid/bsat_wt1415/micmic}
+
+\author{%
+  \studentinfo{Michał Janiszewski}{169485} \and
+  \studentinfo{Michał Kawski}{169487}
+}
+
+\title{Zadanie 2: Filtracja w dziedzinie częstotliwości}
+
+\floatname{algorithm}{Algorytm}
+
+\begin{document}
+
+\maketitle
+
+\section{Cel zadania}
+Celem zadania było rozwinięcie aplikacji powstałej w wyniku wykonania zadania 1. o możliwości filtrowania obrazów w dziedzinie częstotliwości.
+
+Wariant nam przydzielony przewidywał implementację następujących transformat:
+\begin{itemize}
+ \item proste i odwrotne szybkie przekształcenie Fouriera,
+ \item proste i odwrotne (odpowiednio rodzaje 2 i 3) szybkie przekształcenie kosinusowe.
+\end{itemize}
+
+Ponadto, należało stworzyć zestaw filtrów umożliwiający dokonywanie operacji na przekształconych obrazach.
+
+\section{Opis metod przetwarzania}
+\subsection{Przekształcenie Fouriera}
+Przekształceniem Fouriera sygnału ciągłego, jednowymiarowego, $f(x)$ nazywamy $F(u)$ zdefiniowane w następujący sposób:
+\begin{equation}
+  F(u) = \int_{-\infty}^{\infty} f(x)e^{-j2\pi ux}dx
+\end{equation}
+
+Odwrotne przekształcenie Fouriera dla tak powstałego sygnału $F(u)$ zdefiniowane jest w następujący sposób:
+\begin{equation}
+  f(x) = \int_{-\infty}^{\infty}F(u) e^{j2\pi ux}du
+\end{equation}
+
+Dla dyskretnego sygnału wejściowego $\{f_0, f_1, \ldots, f_{N - 1}\}$, powyższa prosta transformata przyjmuje następującą postać:
+\begin{equation}
+  \label{eq.dft}
+  F(n) = \displaystyle \sum_{k = 0}^{N - 1} f(k) e^{-i\frac{2\pi}{N}kn}
+\end{equation}
+gdzie $N$ określa ilość elementów sygnału wejściowego.
+
+Transformata odwrotna dla sygnału dyskretnego określona jest wzorem:
+\begin{equation}
+  \label{eq.idft}
+  f(k) =\frac{1}{N} \displaystyle \sum_{n = 0}^{N - 1} F(k) e^{i\frac{2\pi}{N}kn}
+\end{equation}
+
+Dla dwumiarowego sygnału dyskretnego $L(n, m)$, takiego jak np. obraz cyfrowy, transformata przyjmuje postać:
+\begin{equation}
+  \label{eq.dft2d}
+  F(j, k) = \displaystyle\sum_{n = 0}^{N - 1} \displaystyle \sum_{m = 0}^{M - 1} L(n, m) e^{-i\frac{2\pi}{N} nj} e^{-i\frac{2\pi}{M}mk}
+\end{equation}
+
+Podobnie odwrotna transformata określona jest wzorem:
+\begin{equation}
+  \label{eq.idft2d}
+  L(n, m) = \frac{1}{MN} \displaystyle \sum_{j = 0}^{N - 1} \displaystyle \sum_{k = 0}^{M - 1} F(j, k) e^{i\frac{2\pi}{N} nj} e^{i\frac{2\pi}{M}mk}
+\end{equation}
+gdzie $M$ i $N$ to rozmiary sygnału.
+
+Ponieważ transformata Fouriera jest separowalna, wzór \ref{eq.dft2d} można rozpisać jako transformatę transformat:
+\begin{equation}
+  F(j, k) = \displaystyle \sum_{n = 0}^{N - 1} \left[\displaystyle \sum_{m = 0}^{M - 1} L(n, m) e^{-i\frac{2\pi}{M}mk} \right] e^{-i\frac{2\pi}{N} nj}  
+\end{equation}
+zaś wzór \ref{eq.idft2d} jako:
+\begin{equation}
+  L(n, m) = \frac{1}{MN} \displaystyle \sum_{j = 0}^{N - 1} \left[\displaystyle \sum_{k = 0}^{M - 1} F(j, k) e^{i\frac{2\pi}{M}mk} \right] e^{i\frac{2\pi}{N} nj}
+\end{equation}
+
+\subsubsection{Szybkie przekształcenie Fouriera}
+Zgodnie ze wzorem \ref{eq.dft} łatwo zauważyć, że złożoność algorytmu dla sygnału jedno wymiarowego wynosi $O(N^2)$\footnote{Notacja wielkiego $O$.}, zaś dla dwuwymiarowego (wzór \ref{eq.dft2d}) $O(N^3)$.
+
+Istnieją jednak efektywniejsze algorytmy implementujące DFT (\emph{DFT - discrete Fourier transform}) nazywane ,,szybkim przekształceniem Fouriera'' (\emph{FFT - fast Fourier transform}). Opierają się one o fakt, że transformatę można rozpisać w następujący sposób:
+
+\begin{equation}
+  \label{wzor.fft}
+  \begin{array}{c}
+    F(n) = \displaystyle \sum_{k=0}^{N-1} f(k) e^{-i\frac{2\pi}{N}nk} = \displaystyle\sum_{k = 0}^{N/2 - 1} f(2k) e^{-i\frac{2\pi}{N}(2k)n} + \displaystyle\sum_{k = 0}^{N/2 - 1} f(2k + 1) e^{-i\frac{2\pi}{N}(2k + 1)n} \\
+    = \displaystyle\sum_{k = 0}^{N/2 - 1} f(2k) e^{-i\frac{2\pi}{N/2}kn} + e^{-i\frac{2\pi}{N}n}\displaystyle\sum_{k = 0}^{N/2 - 1} f(2k + 1) e^{-i\frac{2\pi}{N/2}kn}
+  \end{array}
+\end{equation}
+
+W wyniku takiego rozpisania otrzymujemy dwie transformaty o długości $N / 2$ każda. Pierwsza zawiera parzyste elementy ciągu, zaś druga \ppauza nieparzyste. Rozbicie takie pozwala zredukować złożoność obliczeniową algorytmu do $O(N\log_2 N)$.
+
+\subsection{Dyskretne przekształcenie kosinusowe}
+Dyskretne przekształcenie kosinusowe dla sygnału dyskretnego $f(x)$ zdefiniowane jest następująco:
+\begin{equation}
+  \label{eq.dct}
+  C(u) = \alpha (u) \displaystyle \sum_{x = 0}^{N - 1} f(x) \cos \left(\frac{\pi(2x + 1)u}{2N}\right)
+\end{equation}
+dla $u = 0, 1, 2, \ldots, N - 1$, natomiast $\alpha(u)$ oznacza:
+\begin{equation}
+  \label{eq.dctalpha}
+  \alpha(u) = \begin{cases} \sqrt{\frac{1}{N}} & \text{$u = 0$} \\
+			    \sqrt{\frac{2}{N}} & \text{$u \neq 0$}
+              \end{cases}
+\end{equation}
+
+Przekształcenie odwrotne do \ref{eq.dct} opisane jest wzorem:
+\begin{equation}
+  \label{eq.idct}
+  f(x) = \displaystyle \sum_{u = 0}^{N - 1} \alpha(u) C(u) \cos \left(\frac{\pi(2x + 1)u}{2N}\right)
+\end{equation}
+dla $x = 0, 1, 2, \ldots, N - 1$.
+
+\clearpage
+
+
+\end{document}
