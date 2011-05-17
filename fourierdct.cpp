@@ -492,7 +492,7 @@ DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Forma
 		}
 		result.setColorTable(colors);
 	}
-	for (unsigned int i = 0; i < ca->shape()[0]; i += 2) {
+	for (unsigned int i = 1; i < ca->shape()[0]; i += 2) {
 		qreal min = 0;
 		qreal max = 0;
 		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
@@ -512,7 +512,7 @@ DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Forma
 				{
 					QVector3D oldPixel = cp.pixel(k, j, result);
 					QVector3D newPixel;
-					switch (i) {
+					switch (i / 2) {
 						case 0:
 							newPixel.setX(p);
 							break;
