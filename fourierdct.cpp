@@ -438,14 +438,17 @@ void FourierDCT::perform(ComplexArray *ca, bool inverse)
 	Q_ASSERT(ca->num_dimensions() == 3);
 	mW.reserve(qMax(ca->shape()[1], ca->shape()[2]));
 	for (unsigned int i = 0; i < ca->shape()[0]; i += 2) {
-
 		if (inverse) {
 			prepareFftV(ca, i, 2, 1, true);
 			prepareFftH(ca, i, 1, 2, true);
 		}
+		qDebug() << "performing FDCT, inversion:" << inverse;
 
 		oneDFftV(ca, i, 2, 1, inverse);
+		//display(ca);
 		oneDFftH(ca, i, 1, 2, inverse);
+
+		qDebug() << "FDCT done";
 
 		if (!inverse) {
 			prepareFftV(ca, i, 2, 1);
@@ -505,7 +508,8 @@ DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Forma
 		qreal max = 0;
 		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
 			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				qreal real = (*ca)[i][j][k].real();
+				Complex c = (*ca)[i][j][k];
+				qreal real = c.real();
 				if (real > max) {
 					max = real;
 				} else if (real < min) {
@@ -516,7 +520,8 @@ DisplayWindow *FourierDCT::invert(ComplexArray *ca, QString title, QImage::Forma
 
 		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
 			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
-				qreal p = ((*ca)[i][j][k].real() - min) / (max - min) * 255.0;
+				Complex c = (*ca)[i][j][k];
+				qreal p = (c.real() - min) / (max - min) * 255.0;
 				{
 					QVector3D oldPixel = cp.pixel(k, j, result);
 					QVector3D newPixel;
