@@ -438,6 +438,8 @@ void FourierDCT::perform(ComplexArray *ca, bool inverse)
 	Q_ASSERT(ca->num_dimensions() == 3);
 	mW.reserve(qMax(ca->shape()[1], ca->shape()[2]));
 	for (unsigned int i = 0; i < ca->shape()[0]; i += 2) {
+		mFirst = false; // this should be reset for every layer
+
 		if (inverse) {
 			prepareFftV(ca, i, 2, 1, true);
 			prepareFftH(ca, i, 1, 2, true);
