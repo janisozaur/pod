@@ -8,7 +8,7 @@ SimpleDCT::SimpleDCT(QObject *parent) :
 	ImageTransformFilter(parent),
 	mCA(NULL)
 {
-	test();
+	//test();
 }
 
 SimpleDCT::~SimpleDCT()

@@ -9,7 +9,7 @@ FourierDCT::FourierDCT(QObject *parent) :
 	ImageTransformFilter(parent),
 	mCA(NULL)
 {
-	test();
+	//test();
 }
 
 FourierDCT::~FourierDCT()
