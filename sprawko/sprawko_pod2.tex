@@ -130,7 +130,133 @@ Przekształcenie odwrotne do \ref{eq.dct} opisane jest wzorem:
 \end{equation}
 dla $x = 0, 1, 2, \ldots, N - 1$.
 
+\subsection{Szybkie przekształcenie kosinusowe}
+Istnieją różne metody implementacji szybkiego (złożoności $O(N\log_2 N)$) przekształcenia kosinusowego (FCT \ppauza \emph{ang. fast cosine transform}), w naszym programie zdecydowaliśmy się na oparcie przekształcenia kosinusowego o FFT:
+
+\begin{equation}
+  \label{eq.fct}
+  \begin{array}{l}
+    C(u) = \alpha(u) \left( \displaystyle \sum_{x = 0}^{N/2 - 1} f(2x) \cos \left(\frac{\pi(4x + 1)u}{2N}\right) + \displaystyle \sum_{x = 0}^{N/2 - 1} f(2x + 1) \cos \left(\frac{\pi(4x + 3)u}{2N}\right)\right) \\
+    = \alpha(u) \left( \displaystyle \sum_{x = 0}^{N/2 - 1} f_e(x) \cos \left(\frac{\pi(4x + 1)u}{2N}\right) + \displaystyle \sum_{x = 0}^{N/2 - 1} f_o(x) \cos \left(\frac{\pi(4x + 3)u}{2N}\right) \right) \\
+    = \alpha(u) \displaystyle \sum_{x = 0}^{N - 1} f'(x) \cos \left(\frac{\pi(4x + 1)u}{2N}\right) = Re \left(\alpha(u) e^{\frac{-i\pi u}{2N}} \displaystyle \sum_{x = 0}^{N - 1} f'(x) e^{\frac{-i2\pi ux}{2N}}\right) \\
+    = Re \left(\alpha(u) W_{2N}^{u/2} FFT{f'}(x)\right)
+  \end{array}
+\end{equation}
+gdzie:
+\begin{eqnarray}
+  f_o(x) = f(2x+1) = f'(x)\\
+  f_e(x) = f(2x)   = f'(N - x - 1)
+\end{eqnarray}
+
 \clearpage
 
+\section{Implementacja}
+Program powstał jako rozwinięcie zadania pierwszego, w związku z tym wszystkie operacje dostępne w zadaniu pierwszym, dostępne są także w aktualnej wersji programu.
+
+\subsection{Przekształcenia}
+Aby zaimplementować przekształcenia zmodyfikowałem interfejs \verb|FilterInterface| tak, aby mógł przyjmować różne rodzaje danych \ppauza w zależności od wykonywanej operacji.
+
+Część operacji wspólnych dla wszystkich przekształceń została zaimplementowana w interfejsie \verb|ImageTransformFilter| \ppauza tyczy się to głównie zarządzania kolorami.
+
+Zaimplementowałem własną klasę \verb|Complex|, której zadaniem jest obsługa obliczeń na liczbach zespolonych. W celu stworzenia wielowymiarowej tablicy wykorzystałem template \verb|Boost::MultiArray| oferujący wygodny mechanizm zarządzania tablicami o dowolnych ilościu wymiarów i dowolnych rozmiarach. Tablica taka ma zawsze trzy wymiary \ppauza pierwszy zawiera dane dotyczące konkretnej warstwy, pozostałe wymiary zaś określają pozycję na danej warstwie.
+
+Klasy dokonujące przekształceń posiadają metody wykonujące transformację prostą (wywoływane są z okienka, które ,,zleciło'' przekształcenie) oraz odwrotną (wywoływane z nowego okienka, zwróconego w wyniku wykonania przekształcenia odwrotnego). Pozwala to na implementację przekształcenia prostego i odwrotnego w jednej klasie, wymaga jednak współdzielenia instancji filtru w celu dokonania jego inwersji pomiędzy okienkami.
+
+Algorytmy FFT i FCT implementują odpowiednio klasy: \verb|FFT| i \verb|FourierDCT|.
+
+\subsection{Filtry}
+Zaimplementowałem dwa zestawy filtrów \ppauza jeden dla przekształcenia Fouriera, drugi dla przekstzałcenia kosinusowego. Jedyna różnica między nimi sprowadza się do tego, że przekształcenia te posiadają punkt $(0, 0)$ w różnych miejscach widma obrazu \ppauza w przypadku Fouriera jest to środek obrazu, zaś w przypadku kosinusów punkt ten pokrywa się z elementem $(0, 0)$ powstałego widma.
+
+Dostępne filtry to:
+\begin{itemize}
+ \item dolnoprzepustowy \ppauza \verb|LowPassFilter|, \verb|DctLowPassFilter|, wymaga podania promienia, powyżej którego elementy zostaną zresetowane,
+ \item górnoprzepustowy \ppauza \verb|HighPassFilter|, \verb|DctHighPassFilter|, wymaga podania promienia, poniżej którego elementy zostaną zresetowane,
+ \item pasmowoprzepustowy \ppauza \verb|BandPassFilter|, \verb|DctBandPassFilter|, wymaga podania dwóch promieni, poza którymi elementy zostaną zresetowane,
+ \item pasmowozaporowy \ppauza \verb|BandStopFilter|, \verb|DctBandStopFilter|, wymaga podania dwóch promieni, pomiędzy którymi elementy zostaną zresetowane,
+\end{itemize}
+
+\clearpage
+
+\section{Materiały i metody}
+Do testów wykorzystałem popularny obrazek ,,Lena'' w wariantach kolorowym i odcieni szarości. Obrazki te prezentują rysunki \ref{fig.lenac} i \ref{fig.lena}.
+
+\begin{figure}
+\noindent\makebox[\textwidth]{%
+ \subfigure[Obraz kolorowy \textbf{lenac.bmp} wykorzystany do testów.]{
+  \includegraphics[scale=0.3]{img/lenac.png}
+  \label{fig.lenac}
+ }
+ \subfigure[Obraz w skali szarości \textbf{lena.bmp} wykorzystany do testów.]{
+  \includegraphics[scale=0.3]{img/lena.png}
+  \label{fig.lena}
+ }
+}
+\caption{Wykorzystane obrazki}
+\end{figure}
+
+Obrazki zostały poddane przekształceniom i filtrowaniu.
+
+\subsection{Przekształcenia}
+\label{sec.tests.transforms}
+Wyznaczone zostały widma transformat Fouriera i kosinusowej dla podanych obrazów.
+
+\subsection{Filtracja dolnoprzepustowa}
+\label{sec.tests.lowpass}
+Dokonano przekształceń, zastosowano filtr dolnoprzepustowy z promieniem $0.2R$, $0.5R$ i $0.7R$, gdzie $R$ to połowa długości boku obrazka i wyznaczono transformatę odwrotną.
+
+\subsection{Filtracja górnoprzepustowa}
+\label{sec.tests.highpass}
+Dokonano przekształceń, zastosowano filtr górnoprzepustowy z promieniem $0.2R$, $0.5R$ i $0.7R$ i wyznaczono transformatę odwrotną.
+
+\subsection{Filtracja pasmowoprzepustowa}
+\label{sec.tests.bandpass}
+Dokonano przekształceń, zastosowano filtr pasmowoprzepustowy z promieniami $(0.1R, 0.9R)$, $(0.2R, 0.8R)$ i $(0.4R, 0.6R)$ i wyznaczono transformatę odwrotną.
+
+\subsection{Filtracja pasmowozaporowa}
+\label{sec.tests.bandstop}
+Dokonano przekształceń, zastosowano filtr pasmowozaporowy z promieniami $(0.1R, 0.9R)$, $(0.2R, 0.8R)$ i $(0.4R, 0.6R)$ i wyznaczono transformatę odwrotną.
+
+\subsection{Zmiany fazy przekształcenia Fouriera}
+\label{sec.tests.phaseshift}
+Dokonano przekształcenia Fouriera, zastosowano filtr zmieniający fazę z parametrami $(8, 8)$, $(-8, -8)$ i wyznaczono transformatę odwrotną.
+\clearpage
+
+\section{Wyniki}
+Poniżej przedstawione są wyniki operacji przeprowadzonych na obrazkach.
+
+\subsection{Przekształcenia}
+Obrazki \ref{fig.lenac_fourier_phase}, \ref{fig.lenac_fourier_magnitude}, \ref{fig.lenac_cosine_phase}, \ref{fig.lena_fourier_phase}, \ref{fig.lena_fourier_magnitude} i \ref{fig.lena_cosine_phase} przedstawiają wykonane przekształcenia obrazków.
+
+\begin{figure}
+ \subfigure[Widmo fazy przekształcenia Fouriera obrazka \textbf{lenac.bmp} (\ref{fig.lenac})]{
+  \includegraphics[scale=0.3]{img/lenac_fourier_phase.png}
+  \label{fig.lenac_fourier_phase}
+ }
+ \subfigure[Widmo mocy przekształcenia Fouriera obrazka \textbf{lenac.bmp} (\ref{fig.lenac})]{
+  \includegraphics[scale=0.3]{img/lenac_fourier_magnitude.png}
+  \label{fig.lenac_fourier_magnitude}
+ }
+ \subfigure[Widmo przekształcenia kosinusowego obrazka \textbf{lenac.bmp} (\ref{fig.lenac})]{
+  \includegraphics[scale=0.3]{img/lenac_cosine_phase.png}
+  \label{fig.lenac_cosine_phase}
+ }
+\caption{Przekształcenia \textbf{lenac.bmp}}
+\end{figure}
+
+\begin{figure}
+ \subfigure[Widmo fazy przekształcenia Fouriera obrazka \textbf{lena.bmp} (\ref{fig.lena})]{
+  \includegraphics[scale=0.3]{img/lena_fourier_phase.png}
+  \label{fig.lena_fourier_phase}
+ }
+ \subfigure[Widmo mocy przekształcenia Fouriera obrazka \textbf{lena.bmp} (\ref{fig.lena})]{
+  \includegraphics[scale=0.3]{img/lena_fourier_magnitude.png}
+  \label{fig.lena_fourier_magnitude}
+ }
+ \subfigure[Widmo przekształcenia kosinusowego obrazka \textbf{lena.bmp} (\ref{fig.lena})]{
+  \includegraphics[scale=0.3]{img/lena_cosine_phase.png}
+  \label{fig.lena_cosine_phase}
+ }
+\caption{Przekształcenia \textbf{lena.bmp}}
+\end{figure}
 
 \end{document}
