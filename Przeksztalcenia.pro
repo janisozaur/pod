@@ -97,3 +97,6 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     photowindow.ui \
     transformwindow.ui
+
+QMAKE_CXXFLAGS += -fopenmp -O3 -mtune=core2 -march=core2 -frecord-gcc-switches
+LIBS += -lgomp

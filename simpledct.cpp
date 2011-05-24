@@ -3,6 +3,8 @@
 #include "colorparser.h"
 #include "photowindow.h"
 
+#include <QElapsedTimer>
+
 #include <QDebug>
 
 SimpleDCT::SimpleDCT(QObject *parent) :
@@ -149,6 +151,8 @@ DisplayWindow *SimpleDCT::apply(QString windowBaseName)
 void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 {
 	Q_ASSERT(ca->num_dimensions() == 3);
+	QElapsedTimer t;
+	t.start();
 	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
 		if (inverse) {
 			// alpha values get the N = (size of the innermost loop)
@@ -169,6 +173,7 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 			}
 		}
 
+		#pragma omp parallel for
 		for (unsigned int j = 0; j < ca->shape()[2]; j++) {
 			QVector<Complex> elements;
 			elements.reserve(ca->shape()[1]);
@@ -181,6 +186,7 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 			}
 		}
 
+		#pragma omp parallel for
 		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
 			QVector<Complex> elements;
 			elements.reserve(ca->shape()[2]);
@@ -212,6 +218,8 @@ void SimpleDCT::perform(ComplexArray *ca, bool inverse)
 			}
 		}
 	}
+	int msecs = t.elapsed();
+	qDebug() << "performance took" << msecs << "msecs";
 }
 
 qreal SimpleDCT::alpha(int u) const
