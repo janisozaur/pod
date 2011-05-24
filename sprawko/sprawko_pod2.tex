@@ -575,4 +575,14 @@ Obrazki \ref{fig.lenac_fourier_phaseshift} przedstawiają wynik przesunięcia fa
 \label{fig.lenac_fourier_phaseshift}
 \end{figure}
 
+\section{Dyskusja}
+Podczas obróbki obrazów najbardziej charakterystyczną cechą jest fakt, że największy udział mają składowe o niskich częstotliwościach. Tyczy się to zarówno przekształcenia Fouriera jak i kosinusowego. Usunięcie tych składowych, np. filtrem górnoprzepustowym, powoduje znaczne pogorszenie jakości obrazu. Dla odmiany filtracja górnoprzepustowa, w zależności od zadanego promienia, wprowadza bardzo mało zauważalne zmiany w obrazie. Właściwości tej cechy powodują, że można ją wykorzystać do stratnej kompresji obrazu. W praktyce kompresja JPEG opiera się o DCT, gdzie obraz dzielony jest na fragmenty wielkości 8x8 pikseli, wykoywane jest DCT, a elementy bliskie zeru są zerowane. Podejście takie umożliwia wykorzystanie wartości DCT znanych zawczasu \ppauza nie potrzeba ich zapisywać w pliku i posiada dodatkową przewagę nad ,,jednym dużym DCT'', którą jest możliwość wystąpienia powtórzeń bloków, co dodatkowo pozwala zwiększyć stopień kompresji.
+
+\begin{thebibliography}{9}
+\bibitem{librow} Sergey Chernenko. \textit{Fast Fourier Transform \ppauza FFT} [online]. Dostęp: 14.05.2011. Dostępny w Internecie: \url{http://www.librow.com/articles/article-10}
+\bibitem{tr802} Syed Ali Khayam. \textit{The Discrete Cosine Transform (DCT): Theory and Application} [online]. Dostęp: 14.05.2011. Dostępny w Internecie: \url{http://www.wisnet.seecs.edu.pk/publications/tech_reports/DCT_TR802.pdf}
+\bibitem{e186} Ruye Wang. \textit{Discrete Cosine Transform \ppauza E186 handout} [online]. Dostęp: 14.05.2011. Dostępny w Internecie: \url{http://www.wisnet.seecs.edu.pk/publications/tech_reports/DCT_TR802.pdf}
+\end{thebibliography}
+
+
 \end{document}
