@@ -1,6 +1,7 @@
 #include "simpledct.h"
 #include "transformwindow.h"
 #include "colorparser.h"
+#include "photowindow.h"
 
 #include <QDebug>
 
@@ -338,4 +339,67 @@ const ImageTransformFilter::QImages SimpleDCT::complexToImages(const ComplexArra
 	images.magnitude = magnitudeImage;
 	images.phase = phaseImage;
 	return images;
+}
+
+DisplayWindow *SimpleDCT::invert(ComplexArray *ca, QString title, QImage::Format format, QWidget *p)
+{
+	int w = ca->shape()[1];
+	int h = ca->shape()[2];
+	perform(ca, true);
+	ColorParser cp(format);
+	QImage result(w, h, format);
+	result.fill(Qt::black);
+	if (format == QImage::Format_Indexed8) {
+		QVector<QRgb> colors;
+		colors.reserve(256);
+		for (int i = 0; i < 256; i++) {
+			colors << qRgb(i, i, i);
+		}
+		result.setColorTable(colors);
+	}
+	for (unsigned int i = 0; i < ca->shape()[0]; i++) {
+		qreal min = 0;
+		qreal max = 0;
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				Complex c = (*ca)[i][j][k];
+				qreal real = c.real();
+				if (real > max) {
+					max = real;
+				} else if (real < min) {
+					min = real;
+				}
+			}
+		}
+
+		qDebug() << "max, min" << max << min;
+
+		for (unsigned int j = 0; j < ca->shape()[1]; j++) {
+			for (unsigned int k = 0; k < ca->shape()[2]; k++) {
+				Complex c = (*ca)[i][j][k];
+				qreal p = (c.real() - min) / (max - min) * 255.0;
+				{
+					QVector3D oldPixel = cp.pixel(k, j, result);
+					QVector3D newPixel;
+					switch (i) {
+						case 0:
+							newPixel.setX(p);
+							break;
+						case 1:
+							newPixel.setY(p);
+							break;
+						case 2:
+							newPixel.setZ(p);
+							break;
+						default:
+							break;
+					}
+					cp.setPixel(k, j, result, cp.merge(oldPixel, newPixel));
+				}
+			}
+		}
+	}
+	result = result.rgbSwapped();
+	PhotoWindow *pw = new PhotoWindow(result, title + ", IDCT", p);
+	return pw;
 }
